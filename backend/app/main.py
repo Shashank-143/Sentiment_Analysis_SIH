@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from backend.app.api import summariser, keyword
+from backend.app.api import summariser, keyword,sentiment
 
 app = FastAPI(
     title="E-Consultation AI Backend",
@@ -10,7 +10,7 @@ app = FastAPI(
 
 app.include_router(summariser.router, prefix="/api", tags=["Summarization"])
 app.include_router(keyword.router, prefix="/api", tags=["Keyword Extraction"])
-
+app.include_router(sentiment.router, prefix="/api", tags=["Sentiment Analysis"])
 @app.get("/")
 async def root():
     return {"message": "E-Consultation AI API is running"}
