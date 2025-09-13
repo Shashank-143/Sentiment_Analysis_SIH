@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from backend.app.core.summariser_model import generate_summary
+from core.summariser_model import generate_summary
 
 router = APIRouter()
 
@@ -15,7 +15,7 @@ async def summarise_text(request: SummarizeRequest):
         input_length = len(request.text.split())
 
         if input_length < 40:  
-            max_len = 50
+            max_len = 40
             min_len = 5
         else:  
             max_len = request.max_length

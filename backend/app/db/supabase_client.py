@@ -77,11 +77,14 @@ def store_sentiment_analysis(comment_id: str, sentiment_score: float, sentiment_
             "analyzed_at": timestamp
         }
 
-        with httpx.Client() as client:
+        with httpx.Client(timeout=5.0) as client:
             response = client.post(SENTIMENTS_URL, headers=headers, json=data)
             response.raise_for_status()
             logger.info(f"Sentiment analysis stored successfully for comment {comment_id}.")
             return response.json()
+    except httpx.ConnectError:
+        logger.error(f"Network connectivity issue when storing sentiment for comment {comment_id}")
+        raise RuntimeError("Network connectivity issue when storing data")
     except Exception as e:
         logger.error(f"Failed to store sentiment analysis: {str(e)}")
         raise

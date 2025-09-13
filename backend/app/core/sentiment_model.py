@@ -1,43 +1,99 @@
-from transformers import pipeline
+import os
+import httpx
+import socket
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
-from backend.app.db.supabase_client import store_sentiment_analysis
+from db.supabase_client import store_sentiment_analysis
+from dotenv import load_dotenv
+import logging
 
+load_dotenv()
+logger = logging.getLogger(__name__)
 
 nltk.download('vader_lexicon', quiet=True, raise_on_error=False)
 
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+if not HF_API_TOKEN:
+    logger.warning("HF_API_TOKEN not found, will use VADER fallback only")
 
+HF_SENTIMENT_URL = "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english"
+headers = {"Authorization": f"Bearer {HF_API_TOKEN}"} if HF_API_TOKEN else {}
 
-transformer_model = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
-
-
+# VADER analyzer as fallback
 vader_analyzer = SentimentIntensityAnalyzer()
 
-def analyze_sentiment(text: str):
+async def analyze_sentiment_hf_api(text: str):
+    """Analyze sentiment using Hugging Face API"""
+    if not HF_API_TOKEN:
+        return None
+    
     try:
-        result = transformer_model(text)[0]
-        label = result['label']  
-        score = result['score']
-        
-        if score < 0.7:
-            return nltk_fallback(text)
-        return label, score, score
-    except Exception:
-        return nltk_fallback(text)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                HF_SENTIMENT_URL, 
+                headers=headers, 
+                json={"inputs": text}
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+        if isinstance(result, list) and len(result) > 0:
+            # Get the highest scoring label
+            best_result = max(result, key=lambda x: x['score'])
+            label = best_result['label']
+            score = best_result['score']
+            return label, score, score
+        return None
+    except (httpx.ConnectError, httpx.ConnectTimeout, socket.gaierror) as network_err:
+        logger.error(f"HF API network error: {str(network_err)}")
+        raise
+    except Exception as e:
+        logger.error(f"HF API sentiment analysis failed: {str(e)}")
+        return None
 
-def nltk_fallback(text: str):
+def analyze_sentiment_vader(text: str):
+    """VADER sentiment analysis fallback"""
     scores = vader_analyzer.polarity_scores(text)
     compound = scores['compound']
+    
     if compound >= 0.05:
         label = "POSITIVE"
     elif compound <= -0.05:
         label = "NEGATIVE"
     else:
         label = "NEUTRAL"
+    
     confidence = abs(compound)
     return label, compound, confidence
 
+async def analyze_sentiment(text: str):
+    """Main sentiment analysis function with HF API and VADER fallback"""
+    try:
+        # Try Hugging Face API first
+        hf_result = await analyze_sentiment_hf_api(text)
+        if hf_result and hf_result[2] >= 0.7:  # High confidence threshold
+            return hf_result
+        
+        # Fallback to VADER
+        logger.info("Using VADER fallback due to low confidence or no result from HF API")
+        return analyze_sentiment_vader(text)
+        
+        
+    except (httpx.ConnectError, httpx.ConnectTimeout, socket.gaierror):
+        # Explicitly handle network errors by using VADER directly
+        logger.warning("Network error connecting to HF API, using VADER fallback")
+        return analyze_sentiment_vader(text)
+    except Exception as e:
+        logger.error(f"Sentiment analysis failed: {str(e)}")
+        # Final fallback to VADER
+        return analyze_sentiment_vader(text)
+
+def nltk_fallback(text: str):
+    """Legacy function for backward compatibility"""
+    return analyze_sentiment_vader(text)
+
 def store_results(comment_id: str, sentiment_score: float, sentiment_label: str, confidence_score: float):
+    """Store sentiment analysis results"""
     store_sentiment_analysis(
         comment_id=comment_id,
         sentiment_score=sentiment_score,
