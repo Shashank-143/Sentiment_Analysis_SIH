@@ -1,7 +1,7 @@
 // API services for communicating with the backend
 
-// API base URL - consider making this configurable via environment variables
-const API_BASE_URL = 'http://localhost:8000/api';
+// API base URL - configurable via environment variables
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export interface SentimentResult {
   comment_id: string;

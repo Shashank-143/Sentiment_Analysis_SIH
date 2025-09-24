@@ -7,7 +7,7 @@ export const DivOrigami = () => {
     return (
         <section className="flex h-72 flex-col items-center justify-center gap-12 bg-gradient-to-b from-[#021410] to-[#000000] px-4 py-24 md:flex-row">
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl font-semibold text-neutral-100">
-                tech stack
+                Tech Stack
             </h2>
 
             <LogoRolodex
@@ -15,16 +15,13 @@ export const DivOrigami = () => {
                     <LogoItem key={1} className="bg-orange-300 text-neutral-900">
                         <SiHuggingface />
                     </LogoItem>,
-                    <LogoItem key={2} className="bg-green-300 text-neutral-900">
-                        <SiGoogle />
-                    </LogoItem>,
-                    <LogoItem key={3} className="bg-blue-300 text-neutral-900">
+                    <LogoItem key={2} className="bg-blue-300 text-neutral-900">
                         <SiPython />
                     </LogoItem>,
-                    <LogoItem key={4} className="bg-white text-black">
+                    <LogoItem key={3} className="bg-white text-black">
                         <SiGithub />
                     </LogoItem>,
-                    <LogoItem key={5} className="bg-purple-300 text-neutral-900">
+                    <LogoItem key={4} className="bg-purple-300 text-neutral-900">
                         <SiSupabase />
                     </LogoItem>,
                 ]}
