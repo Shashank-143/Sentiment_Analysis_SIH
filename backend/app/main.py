@@ -1,17 +1,18 @@
 from fastapi import FastAPI
-from api import summariser, keyword, sentiment, wordcloud
+from api import summariser, keyword, sentiment, wordcloud, excel_processor
 import uvicorn
 
 app = FastAPI(
     title="E-Consultation AI Backend",
     version="1.0.0",
-    description="FastAPI backend for sentiment analysis, summarization, keyword extraction, and word cloud generation."
+    description="FastAPI backend for sentiment analysis, summarization, keyword extraction, word cloud generation, and Excel processing."
 )
 
 app.include_router(summariser.router, prefix="/api", tags=["Summarization"])
 app.include_router(keyword.router, prefix="/api", tags=["Keyword Extraction"])
 app.include_router(sentiment.router, prefix="/api", tags=["Sentiment Analysis"])
 app.include_router(wordcloud.router, prefix="/api", tags=["Word Cloud Generation"])
+app.include_router(excel_processor.router, prefix="/api", tags=["Excel Processing"])
 
 @app.get("/status")
 async def status():
