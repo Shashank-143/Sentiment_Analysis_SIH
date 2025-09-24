@@ -1,7 +1,7 @@
 // API services for communicating with the backend
 
 // API base URL - configurable via environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
 
 export interface SentimentResult {
   comment_id: string;
