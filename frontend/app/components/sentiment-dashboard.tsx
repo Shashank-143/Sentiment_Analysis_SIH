@@ -7,9 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import WordCloud from "./word-cloud";
 import FileUpload from "./file-upload";
+import { analyzeSentiment, generateSummary, SentimentResult } from "@/services/api";
 
 // --- Sentiment Pill ---
-const SentimentPill = ({ sentiment }: { sentiment: "Positive" | "Neutral" | "Negative" }) => {
+const SentimentPill = ({ 
+    sentiment, 
+    score 
+}: { 
+    sentiment: "Positive" | "Neutral" | "Negative"; 
+    score?: number 
+}) => {
     const colors: Record<string, string> = {
         Positive: "bg-emerald-100 text-emerald-700",
         Neutral: "bg-gray-100 text-gray-700",
@@ -23,28 +30,68 @@ const SentimentPill = ({ sentiment }: { sentiment: "Positive" | "Neutral" | "Neg
                 colors[sentiment] || "bg-gray-100 text-gray-700"
             )}
         >
-            {sentiment}
+            {sentiment}{score !== undefined && ` (${score.toFixed(2)})`}
         </span>
     );
 };
 
+// Interface for feedback items
+interface FeedbackItem {
+    text: string; 
+    sentiment: "Positive" | "Neutral" | "Negative";
+    score?: number;
+}
+
 // --- Main Dashboard ---
 export default function SentimentDashboard() {
     const [feedback, setFeedback] = useState("");
-    const [submittedFeedback, setSubmittedFeedback] = useState<
-        { text: string; sentiment: "Positive" | "Neutral" | "Negative" }[]
-    >([
-        { text: "The platform is easy to use and well designed.", sentiment: "Positive" },
-        { text: "Consultation response time is slow.", sentiment: "Negative" },
-        { text: "Information is clear, but the forms are too long.", sentiment: "Neutral" },
-        { text: "Helpful team, very responsive.", sentiment: "Positive" },
-        { text: "Mobile version needs improvement.", sentiment: "Negative" },
-    ]);
+    const [submittedFeedback, setSubmittedFeedback] = useState<FeedbackItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [summary, setSummary] = useState<string[]>([]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!feedback.trim()) return;
-        setSubmittedFeedback([{ text: feedback, sentiment: "Neutral" }, ...submittedFeedback]);
-        setFeedback("");
+        
+        setIsLoading(true);
+        
+        try {
+            // Get sentiment analysis
+            const sentimentResult = await analyzeSentiment(feedback);
+            
+            // Map API sentiment labels to UI labels
+            const sentimentLabel = sentimentResult.sentiment_label === "POSITIVE" ? "Positive" : 
+                                  sentimentResult.sentiment_label === "NEGATIVE" ? "Negative" : "Neutral";
+            
+            // Add new feedback with sentiment analysis
+            const newFeedback: FeedbackItem = {
+                text: feedback,
+                sentiment: sentimentLabel as "Positive" | "Neutral" | "Negative",
+                score: sentimentResult.sentiment_score
+            };
+            
+            setSubmittedFeedback([newFeedback, ...submittedFeedback]);
+            
+            // Generate summary if this is the first feedback or periodically
+            if (submittedFeedback.length === 0 || submittedFeedback.length % 3 === 0) {
+                const allText = [feedback, ...submittedFeedback.map(f => f.text)].join(" ");
+                const summaryResult = await generateSummary(allText);
+                if (summaryResult.summary) {
+                    // Split the summary into bullet points
+                    const bulletPoints = summaryResult.summary
+                        .split('.')
+                        .filter(point => point.trim().length > 0)
+                        .map(point => point.trim());
+                    
+                    setSummary(bulletPoints);
+                }
+            }
+            
+            setFeedback("");
+        } catch (error) {
+            console.error("Error processing feedback:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // --- Group by sentiment ---
@@ -71,9 +118,14 @@ export default function SentimentDashboard() {
                         onChange={(e) => setFeedback(e.target.value)}
                         placeholder="Write your comment..."
                         className="flex-1 h-full"
+                        disabled={isLoading}
                     />
-                    <Button onClick={handleSubmit} className="h-full flex-shrink-0">
-                        Submit
+                    <Button 
+                        onClick={handleSubmit} 
+                        className="h-full flex-shrink-0"
+                        disabled={isLoading || !feedback.trim()}
+                    >
+                        {isLoading ? 'Analyzing...' : 'Submit'}
                     </Button>
                 </div>
                 <FileUpload />
@@ -102,7 +154,9 @@ export default function SentimentDashboard() {
                             <h3 className="text-sm font-medium text-gray-700 mb-2">Positive Feedback</h3>
                             <div className="flex flex-wrap gap-2">
                                 {positives.length
-                                    ? positives.map((f, i) => <SentimentPill key={i} sentiment="Positive" />)
+                                    ? positives.map((f, i) => (
+                                        <SentimentPill key={i} sentiment="Positive" score={f.score} />
+                                      ))
                                     : <p className="text-gray-400 text-xs">No positive feedback yet.</p>}
                             </div>
                         </div>
@@ -112,7 +166,9 @@ export default function SentimentDashboard() {
                             <h3 className="text-sm font-medium text-gray-700 mb-2">Neutral Feedback</h3>
                             <div className="flex flex-wrap gap-2">
                                 {neutrals.length
-                                    ? neutrals.map((f, i) => <SentimentPill key={i} sentiment="Neutral" />)
+                                    ? neutrals.map((f, i) => (
+                                        <SentimentPill key={i} sentiment="Neutral" score={f.score} />
+                                      ))
                                     : <p className="text-gray-400 text-xs">No neutral feedback yet.</p>}
                             </div>
                         </div>
@@ -122,7 +178,9 @@ export default function SentimentDashboard() {
                             <h3 className="text-sm font-medium text-gray-700 mb-2">Negative Feedback</h3>
                             <div className="flex flex-wrap gap-2">
                                 {negatives.length
-                                    ? negatives.map((f, i) => <SentimentPill key={i} sentiment="Negative" />)
+                                    ? negatives.map((f, i) => (
+                                        <SentimentPill key={i} sentiment="Negative" score={f.score} />
+                                      ))
                                     : <p className="text-gray-400 text-xs">No negative feedback yet.</p>}
                             </div>
                         </div>
@@ -131,9 +189,13 @@ export default function SentimentDashboard() {
                         <div>
                             <h3 className="text-sm font-medium text-gray-700 mb-2">Top Points</h3>
                             <ul className="list-disc pl-5 text-gray-600 space-y-1 text-sm">
-                                {submittedFeedback.slice(0, 5).map((f, i) => (
-                                    <li key={i}>{f.text}</li>
-                                ))}
+                                {submittedFeedback.length === 0 && summary.length === 0 ? (
+                                    <li>Submit feedback to see summary points</li>
+                                ) : summary.length > 0 ? (
+                                    summary.map((point, i) => <li key={i}>{point}</li>)
+                                ) : (
+                                    submittedFeedback.slice(0, 5).map((f, i) => <li key={i}>{f.text}</li>)
+                                )}
                             </ul>
                         </div>
                     </CardContent>

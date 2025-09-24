@@ -38,16 +38,12 @@ async def sentiment_analysis(request: BatchCommentsRequest):
                 "confidence_score": confidence
             })
             
-            try:
-                store_results(
-                    comment_id=comment.comment_id,
-                    sentiment_score=score,
-                    sentiment_label=label,
-                    confidence_score=confidence
-                )
-
-            except Exception as storage_err:
-                logger.error(f"Failed to store results: {str(storage_err)}")
+            store_results(
+                comment_id=comment.comment_id,
+                sentiment_score=score,
+                sentiment_label=label,
+                confidence_score=confidence
+            )
                 
         return {"results": results}
     

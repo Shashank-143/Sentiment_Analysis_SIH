@@ -1,0 +1,14 @@
+{
+  "name": "sentiment-analysis-sih",
+  "version": "1.0.0",
+  "description": "Sentiment Analysis SIH Project",
+  "scripts": {
+    "start:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && python -m uvicorn app.main:app --reload",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "dev": "npm run start:frontend"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

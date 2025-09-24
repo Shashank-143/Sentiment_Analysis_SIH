@@ -313,7 +313,7 @@ const UploadingAnimation = ({ progress }: { progress: number }) => (
 export default function FileUpload({
     onUploadSuccess = () => { },
     onUploadError = () => { },
-    acceptedFileTypes = [],
+    acceptedFileTypes = ['.xlsx', '.xls'],  // Only accept Excel files
     maxFileSize = DEFAULT_MAX_FILE_SIZE,
     currentFile: initialFile = null,
     onFileRemove = () => { },
@@ -327,6 +327,7 @@ export default function FileUpload({
     const [error, setError] = useState<FileError | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [processingResult, setProcessingResult] = useState<string | null>(null);
 
     useEffect(() => {
         return () => {
@@ -386,38 +387,66 @@ export default function FileUpload({
     );
 
     const simulateUpload = useCallback(
-        (uploadingFile: File) => {
+        async (uploadingFile: File) => {
             let currentProgress = 0;
 
             if (uploadIntervalRef.current) {
                 clearInterval(uploadIntervalRef.current);
             }
 
+            // Start progress animation for visual feedback
             uploadIntervalRef.current = setInterval(() => {
-                currentProgress += UPLOAD_STEP_SIZE;
-                if (currentProgress >= 100) {
-                    if (uploadIntervalRef.current) {
-                        clearInterval(uploadIntervalRef.current);
-                    }
-                    setProgress(0);
+                // Don't go to 100% until actual processing is complete
+                currentProgress = Math.min(currentProgress + UPLOAD_STEP_SIZE, 95);
+                setProgress(currentProgress);
+            }, uploadDelay / (100 / UPLOAD_STEP_SIZE));
+
+            try {
+                // Import the API function dynamically to avoid issues
+                const { processExcelFile } = await import('@/services/api');
+                
+                // Actually process the Excel file
+                const processedFile = await processExcelFile(uploadingFile);
+                
+                // Create a download URL for the processed file
+                const downloadUrl = URL.createObjectURL(processedFile);
+                setProcessingResult(downloadUrl);
+                
+                // Complete progress and handle success
+                if (uploadIntervalRef.current) {
+                    clearInterval(uploadIntervalRef.current);
+                }
+                setProgress(100);
+                
+                // After a delay, reset the UI
+                setTimeout(() => {
                     setStatus("idle");
+                    setProgress(0);
                     setFile(null);
                     onUploadSuccess?.(uploadingFile);
-                } else {
-                    setStatus((prevStatus) => {
-                        if (prevStatus === "uploading") {
-                            setProgress(currentProgress);
-                            return "uploading";
-                        }
-                        if (uploadIntervalRef.current) {
-                            clearInterval(uploadIntervalRef.current);
-                        }
-                        return prevStatus;
-                    });
+                }, 1000);
+                
+                // Trigger download automatically
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `processed_${uploadingFile.name}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('Excel processing failed:', error);
+                if (uploadIntervalRef.current) {
+                    clearInterval(uploadIntervalRef.current);
                 }
-            }, uploadDelay / (100 / UPLOAD_STEP_SIZE));
+                setProgress(0);
+                handleError({
+                    message: 'Excel processing failed. Please try again.',
+                    code: 'PROCESSING_FAILED'
+                });
+            }
         },
-        [onUploadSuccess, uploadDelay]
+        [onUploadSuccess, uploadDelay, handleError]
     );
 
     const handleFileSelect = useCallback(
@@ -566,20 +595,12 @@ export default function FileUpload({
 
                                         <div className="text-center space-y-1.5 mb-4">
                                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-                                                Drag and drop or
+                                                Upload Excel file for analysis
                                             </h3>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
                                                 {acceptedFileTypes?.length
-                                                    ? `${acceptedFileTypes
-                                                        .map(
-                                                            (t) =>
-                                                                t.split(
-                                                                    "/"
-                                                                )[1]
-                                                        )
-                                                        .join(", ")
-                                                        .toUpperCase()}`
-                                                    : "SVG, PNG, JPG or GIF"}{" "}
+                                                    ? "Excel files (.xlsx, .xls)"
+                                                    : "Excel files (.xlsx, .xls)"}{" "}
                                                 {maxFileSize &&
                                                     `up to ${formatBytes(
                                                         maxFileSize

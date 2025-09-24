@@ -13,10 +13,11 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_ENABLED = True
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    logger.error("SUPABASE_URL and SUPABASE_KEY must be set in environment variables")
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set")
+    logger.warning("SUPABASE_URL and SUPABASE_KEY not found or invalid. Database storage will be disabled.")
+    SUPABASE_ENABLED = False
 
 BASE_URL = f"{SUPABASE_URL}/rest/v1"
 
@@ -60,11 +61,16 @@ def store_comment(comment_text: str, legislation_id: str, stakeholder_id: str, s
 
 # Store sentiment analysis results for a comment.
 def store_sentiment_analysis(comment_id: str, sentiment_score: float, sentiment_label: str, confidence_score: float,
-                            analysis_details: Optional[Dict] = None) -> Dict:
+                            analysis_details: Optional[Dict] = None) -> Optional[Dict]:
 
     if not comment_id:
         logger.error("comment_id is required.")
         raise ValueError("Missing required parameters")
+        
+    # If Supabase is not enabled, return without trying to store
+    if not SUPABASE_ENABLED:
+        logger.info(f"Skipping storage of sentiment analysis for comment {comment_id} (Supabase disabled).")
+        return None
 
     try:
         timestamp = datetime.utcnow().isoformat()
@@ -77,17 +83,17 @@ def store_sentiment_analysis(comment_id: str, sentiment_score: float, sentiment_
             "analyzed_at": timestamp
         }
 
-        with httpx.Client(timeout=5.0) as client:
+        with httpx.Client(timeout=10.0) as client:
             response = client.post(SENTIMENTS_URL, headers=headers, json=data)
             response.raise_for_status()
             logger.info(f"Sentiment analysis stored successfully for comment {comment_id}.")
             return response.json()
     except httpx.ConnectError:
-        logger.error(f"Network connectivity issue when storing sentiment for comment {comment_id}")
-        raise RuntimeError("Network connectivity issue when storing data")
+        logger.warning(f"Network connectivity issue when storing sentiment for comment {comment_id} - continuing without storage")
+        return None
     except Exception as e:
-        logger.error(f"Failed to store sentiment analysis: {str(e)}")
-        raise
+        logger.warning(f"Failed to store sentiment analysis: {str(e)} - continuing without storage")
+        return None
 
 # Store a generated summary of stakeholder comments.
 def store_summary(legislation_id: str, summary_text: str, summary_type: str, comment_count: int, metadata: Optional[Dict] = None) -> Dict:
