@@ -17,7 +17,7 @@ HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 if not HF_API_TOKEN:
     logger.warning("HF_API_TOKEN is missing in .env file, will use fallback summarization")
 
-HF_SUMMARIZER_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+HF_SUMMARIZER_URL = "https://api-inference.huggingface.co/models/sshleifer/distilbart-cnn-12-6"
 headers = {"Authorization": f"Bearer {HF_API_TOKEN}"} if HF_API_TOKEN else {}
 
 
@@ -67,7 +67,7 @@ async def generate_summary(text: str, max_length: int = 130, min_length: int = 3
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(HF_SUMMARIZER_URL, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
