@@ -327,7 +327,7 @@ export default function FileUpload({
     const [error, setError] = useState<FileError | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const [processingResult, setProcessingResult] = useState<string | null>(null);
+    const setProcessingResult = useState<string | null>(null)[1];
 
     useEffect(() => {
         return () => {

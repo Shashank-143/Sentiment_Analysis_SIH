@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SiGithub, SiGoogle, SiHuggingface, SiPython, SiSupabase } from "react-icons/si";
+import { SiGithub, SiHuggingface, SiPython, SiSupabase } from "react-icons/si";
 import { twMerge } from "tailwind-merge";
 export const DivOrigami = () => {
     return (
