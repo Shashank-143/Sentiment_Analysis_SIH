@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import WordCloud from "./word-cloud";
 import FileUpload from "./file-upload";
-import { analyzeSentiment, generateSummary} from "@/services/api";
+import { analyzeSentiment, generateSummary } from "@/services/api";
 
 // --- Sentiment Pill ---
 const SentimentPill = ({ 

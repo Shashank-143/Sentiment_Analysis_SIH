@@ -6,8 +6,9 @@ import {
     type DragEvent,
     useEffect,
 } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { UploadCloud } from "lucide-react";
+import { isDevelopment, DEFAULT_API_URL, API_BASE_URL } from "@/services/api";
 import { cn } from "@/lib/utils";
 
 type FileStatus = "idle" | "dragging" | "uploading" | "error";
@@ -327,7 +328,6 @@ export default function FileUpload({
     const [error, setError] = useState<FileError | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const setProcessingResult = useState<string | null>(null)[1];
 
     useEffect(() => {
         return () => {
@@ -354,16 +354,19 @@ export default function FileUpload({
         (file: File): FileError | null => {
             if (!acceptedFileTypes?.length) return null;
 
-            const fileType = file.type.toLowerCase();
-            if (
-                !acceptedFileTypes.some((type) =>
-                    fileType.match(type.toLowerCase())
-                )
-            ) {
+            const fileName = file.name.toLowerCase();
+            const isValidType = acceptedFileTypes.some((type) => {
+                // Handle extensions like .xlsx, .xls
+                if (type.startsWith('.')) {
+                    return fileName.endsWith(type.toLowerCase());
+                }
+                // Handle MIME types
+                return file.type.toLowerCase().includes(type.toLowerCase());
+            });
+
+            if (!isValidType) {
                 return {
-                    message: `File type must be ${acceptedFileTypes.join(
-                        ", "
-                    )}`,
+                    message: `File type must be ${acceptedFileTypes.join(", ")}`,
                     code: "INVALID_FILE_TYPE",
                 };
             }
@@ -408,23 +411,17 @@ export default function FileUpload({
                 // Actually process the Excel file
                 const processedFile = await processExcelFile(uploadingFile);
                 
-                // Create a download URL for the processed file
-                const downloadUrl = URL.createObjectURL(processedFile);
-                setProcessingResult(downloadUrl);
-                
                 // Complete progress and handle success
                 if (uploadIntervalRef.current) {
                     clearInterval(uploadIntervalRef.current);
                 }
                 setProgress(100);
+                if (!processedFile || processedFile.size === 0) {
+                    throw new Error('Received empty file from server');
+                }
                 
-                // After a delay, reset the UI
-                setTimeout(() => {
-                    setStatus("idle");
-                    setProgress(0);
-                    setFile(null);
-                    onUploadSuccess?.(uploadingFile);
-                }, 1000);
+                // Create a download URL for the processed file
+                const downloadUrl = URL.createObjectURL(processedFile);
                 
                 // Trigger download automatically
                 const link = document.createElement('a');
@@ -434,15 +431,52 @@ export default function FileUpload({
                 link.click();
                 document.body.removeChild(link);
                 
+                // Clean up the URL
+                setTimeout(() => {
+                    URL.revokeObjectURL(downloadUrl);
+                }, 1000);
+                
+                // After a delay, reset the UI
+                setTimeout(() => {
+                    setStatus("idle");
+                    setProgress(0);
+                    setFile(null);
+                    onUploadSuccess?.(uploadingFile);
+                }, 1500);
+                
             } catch (error) {
                 console.error('Excel processing failed:', error);
                 if (uploadIntervalRef.current) {
                     clearInterval(uploadIntervalRef.current);
                 }
                 setProgress(0);
+                
+                // Extract meaningful error message if possible
+                let errorMessage = 'Excel processing failed. Please try again.';
+                let errorCode = 'PROCESSING_FAILED';
+                
+                if (error instanceof Error) {
+                    if (error.message.includes('Network connection error') || error.message.includes('Failed to fetch')) {
+                        errorMessage = 'Cannot connect to server. Please check your internet connection and ensure the backend server is running.';
+                        errorCode = 'CONNECTION_ERROR';
+                    } else if (error.message.includes('Error 400')) {
+                        errorMessage = 'Invalid Excel format. File must contain "comment_id" and "comment" columns.';
+                        errorCode = 'INVALID_FORMAT';
+                    } else if (error.message.includes('Error 413')) {
+                        errorMessage = 'File too large. Please try with a smaller file.';
+                        errorCode = 'FILE_TOO_LARGE';
+                    } else if (error.message.includes('timeout') || error.message.includes('time out')) {
+                        errorMessage = 'Request timed out. The server took too long to respond.';
+                        errorCode = 'TIMEOUT';
+                    } else {
+                        // Use the error message from the server
+                        errorMessage = error.message;
+                    }
+                }
+                
                 handleError({
-                    message: 'Excel processing failed. Please try again.',
-                    code: 'PROCESSING_FAILED'
+                    message: errorMessage,
+                    code: errorCode
                 });
             }
         },
@@ -528,6 +562,9 @@ export default function FileUpload({
     }, [status]);
 
     const resetState = useCallback(() => {
+        if (uploadIntervalRef.current) {
+            clearInterval(uploadIntervalRef.current);
+        }
         setFile(null);
         setStatus("idle");
         setProgress(0);
@@ -598,9 +635,7 @@ export default function FileUpload({
                                                 Upload Excel file for analysis
                                             </h3>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {acceptedFileTypes?.length
-                                                    ? "Excel files (.xlsx, .xls)"
-                                                    : "Excel files (.xlsx, .xls)"}{" "}
+                                                Excel files (.xlsx, .xls) with columns "comment_id" and "comment"{" "}
                                                 {maxFileSize &&
                                                     `up to ${formatBytes(
                                                         maxFileSize
@@ -680,11 +715,46 @@ export default function FileUpload({
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg"
+                                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg max-w-[90%] w-auto"
                                 >
-                                    <p className="text-sm text-red-500 dark:text-red-400">
-                                        {error.message}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            width="16" 
+                                            height="16" 
+                                            viewBox="0 0 24 24" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            className="text-red-500 dark:text-red-400 flex-shrink-0"
+                                        >
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="12" y1="8" x2="12" y2="12"/>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                        </svg>
+                                        <p className="text-sm text-red-500 dark:text-red-400 font-medium">
+                                            {error.message}
+                                        </p>
+                                    </div>
+                                    {error.code === 'CONNECTION_ERROR' && (
+                                        <p className="text-xs text-red-500/70 dark:text-red-400/70 mt-1 ml-6">
+                                            Make sure the backend server is running at {API_BASE_URL ? API_BASE_URL.split('/api')[0] : 'the configured URL'}.
+                                        </p>
+                                    )}
+                                    {error.code === 'INVALID_FORMAT' && (
+                                        <p className="text-xs text-red-500/70 dark:text-red-400/70 mt-1 ml-6">
+                                            Your Excel file must have columns named exactly "comment_id" and "comment" (case-insensitive). 
+                                            Please check your file and ensure these columns are present.
+                                        </p>
+                                    )}
+                                    <button 
+                                        onClick={resetState}
+                                        className="w-full mt-2 text-xs text-center text-red-500 hover:text-red-600 dark:text-red-400 hover:dark:text-red-300 transition-colors"
+                                    >
+                                        Dismiss and Try Again
+                                    </button>
                                 </motion.div>
                             )}
                         </AnimatePresence>

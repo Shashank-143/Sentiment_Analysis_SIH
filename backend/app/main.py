@@ -9,13 +9,23 @@ app = FastAPI(
     description="FastAPI backend for sentiment analysis, summarization, keyword extraction, word cloud generation, and Excel processing."
 )
 
-# Add CORS middleware
+# Add CORS middleware with explicit origins
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://sentiment-analysis-sih.vercel.app",
+    "https://sentiment-analysis-sih-frontend.vercel.app",  # Additional production domain
+    "https://sih.shashankgoel.tech"
+    "https://www.sentiment-analysis-sih.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With", "Content-Disposition"],
+    expose_headers=["Content-Disposition", "Content-Type", "Content-Length"]  # Important for file downloads
 )
 
 app.include_router(summariser.router, prefix="/api", tags=["Summarization"])
@@ -26,7 +36,11 @@ app.include_router(excel_processor.router, prefix="/api", tags=["Excel Processin
 
 @app.get("/status")
 async def status():
-    return {"message": "E-Consultation AI API is running"}
+    return {"message": "E-Consultation AI API is running", "status": "ok"}
+
+@app.get("/api/status")
+async def api_status():
+    return {"message": "E-Consultation AI API is running", "status": "ok"}
 
 @app.get("/")
 async def root():

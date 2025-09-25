@@ -1,7 +1,12 @@
 // API services for communicating with the backend
 
 // API base URL - configurable via environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
+export const isDevelopment = process.env.NODE_ENV === 'development';
+export const DEFAULT_API_URL = isDevelopment 
+  ? 'http://localhost:8000/api'
+  : 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
 export interface SentimentResult {
   comment_id: string;
@@ -116,18 +121,79 @@ export const processExcelFile = async (file: File): Promise<Blob> => {
     const formData = new FormData();
     formData.append('file', file);
     
+    // Log more detailed connection information for debugging
+    console.log(`Current environment: ${process.env.NODE_ENV}`);
+    console.log(`Using API URL: ${API_BASE_URL}/process-excel`);
+    
+    // Test server connectivity before sending the file
+    try {
+      console.log(`Testing connectivity to ${API_BASE_URL}/status...`);
+      const statusResponse = await fetch(`${API_BASE_URL}/status`, { 
+        method: 'GET', 
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000) // 10 second timeout for connectivity check
+      });
+      
+      if (!statusResponse.ok) {
+        throw new Error(`Server returned ${statusResponse.status}: ${statusResponse.statusText}`);
+      }
+      
+      console.log('Connectivity test successful');
+    } catch (connError) {
+      console.error('Backend server connectivity test failed:', connError);
+      throw new Error(`Cannot connect to server (${connError.message}). Please check your internet connection and ensure the backend server is running.`);
+    }
+    
+    console.log(`Uploading file: ${file.name} (${file.size} bytes)`);
     const response = await fetch(`${API_BASE_URL}/process-excel`, {
       method: 'POST',
       body: formData,
+      redirect: 'follow',
+      mode: 'cors',
+      credentials: 'include', 
+      signal: AbortSignal.timeout(600000) // 10 min timeout for larger files
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      if (response.status === 400 && errorText.includes("comment_id")) {
+        throw new Error('Invalid Excel format. File must contain "comment_id" and "comment" columns.');
+      } else if (response.status === 400 && errorText.includes("Excel")) {
+        throw new Error('Invalid Excel file format. Please check the format and try again.');
+      } else {
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+      }
     }
 
-    return await response.blob();
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) {
+      throw new Error('Received empty response from server');
+    }
+    
+    return blob;
   } catch (error) {
-    console.error('Failed to process Excel file:', error);
-    throw error;
+    // Better handle network errors
+    if (error.name === 'AbortError') {
+      console.error('Request timed out after 10 minutes');
+      throw new Error('Request timed out. Excel processing is taking too long. Please try with a smaller file or try again later.');
+    } else if (error.message === 'Failed to fetch') {
+      console.error('Network error - Failed to fetch');
+      throw new Error('Network connection error. Please check your internet connection and ensure the backend server is running.');
+    } else if (error.message && error.message.includes('NetworkError')) {
+      console.error('CORS or network error:', error);
+      throw new Error('Network error. This might be due to CORS restrictions or network connectivity issues.');
+    } else {
+      console.error('Failed to process Excel file:', error);
+      
+      // Provide more user-friendly error messages
+      const errorMessage = error.message || 'Unknown error';
+      if (errorMessage.includes('Excel') || errorMessage.includes('format')) {
+        throw new Error(errorMessage); // Excel-specific errors are already user-friendly
+      } else {
+        throw new Error(`Error processing file: ${errorMessage}`);
+      }
+    }
   }
 };
