@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { SiGithub, SiHuggingface, SiPython, SiSupabase } from "react-icons/si";
+import { SiGithub, SiHuggingface, SiNextdotjs, SiPython, SiSupabase } from "react-icons/si";
 import { twMerge } from "tailwind-merge";
 export const DivOrigami = () => {
     return (
@@ -12,16 +12,19 @@ export const DivOrigami = () => {
 
             <LogoRolodex
                 items={[
-                    <LogoItem key={1} className="bg-orange-300 text-neutral-900">
+                    <LogoItem key={1} className="bg-yellow-300 text-neutral-900">
+                        <SiNextdotjs />
+                    </LogoItem>,
+                    <LogoItem key={2} className="bg-orange-300 text-neutral-900">
                         <SiHuggingface />
                     </LogoItem>,
-                    <LogoItem key={2} className="bg-blue-300 text-neutral-900">
+                    <LogoItem key={3} className="bg-blue-300 text-neutral-900">
                         <SiPython />
                     </LogoItem>,
-                    <LogoItem key={3} className="bg-white text-black">
+                    <LogoItem key={4} className="bg-white text-black">
                         <SiGithub />
                     </LogoItem>,
-                    <LogoItem key={4} className="bg-purple-300 text-neutral-900">
+                    <LogoItem key={5} className="bg-purple-300 text-neutral-900">
                         <SiSupabase />
                     </LogoItem>,
                 ]}

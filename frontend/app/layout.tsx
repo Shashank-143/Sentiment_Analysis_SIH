@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Binary Beasts| Sentiment AI",
   description: "SIH|BINARY BEASTS|SENTIMENT ANALYSIS",
+  icons: {
+    icon: "/binarybeasts.png",
+  },
 };
 
 export default function RootLayout({
@@ -24,6 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/binarybeasts.png" type="image/x-icon" />
+      </head>
+
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
