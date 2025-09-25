@@ -8,7 +8,7 @@ export default function Footer() {
             <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 md:flex-row">
                 {/* Left: Brand / Copyright */}
                 <p className="text-sm text-gray-500">
-                    © {new Date().getFullYear()} SentimentAI. All rights reserved.
+                    © {new Date().getFullYear()} Sentiment<span className="text-cyan-300">AI</span>
                 </p>
 
                 {/* Right: Navigation / Social Links */}
