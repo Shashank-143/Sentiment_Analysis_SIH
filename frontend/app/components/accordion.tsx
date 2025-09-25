@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Accordion as AccordionPrimitive } from "@base-ui-components/react/accordion";
-import { IconChevronDown } from "@tabler/icons-react"; // swapped Lucide with Tabler
+import { IconChevronDown } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 export interface AccordionProps {
@@ -11,7 +11,7 @@ export interface AccordionProps {
     items?: Array<{
         value: string;
         trigger: string;
-        content: string;
+        content: React.ReactNode;
     }>;
     children?: React.ReactNode;
 }
@@ -41,7 +41,7 @@ function AccordionItem({
     return (
         <AccordionPrimitive.Item
             data-slot="accordion-item"
-            className={cn("border-b border-gray-200 last:border-b-0", className)}
+            className={cn("border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors", className)}
             {...props}
         />
     );
@@ -92,40 +92,80 @@ export default function AccordionDemo({
         {
             value: "item-1",
             trigger: "What is the Sentiment Analysis Dashboard?",
-            content:
-                "It is a platform that uses AI-powered sentiment detection to analyze public feedback. Decision-makers can quickly understand opinions, spot trends, and improve consultation outcomes.",
+            content: (
+                <p>
+                    It’s an <strong>AI-powered platform</strong> that analyzes written feedback
+                    from text or Excel files. It classifies comments as{" "}
+                    <span className="text-green-600 font-medium">positive</span>,{" "}
+                    <span className="text-gray-600 font-medium">neutral</span>, or{" "}
+                    <span className="text-red-600 font-medium">negative</span>, highlights{" "}
+                    <strong>key points</strong>, generates a <strong>word cloud</strong>,
+                    and provides results in a downloadable Excel file.
+                </p>
+            ),
         },
         {
             value: "item-2",
             trigger: "How do I upload comments or feedback?",
-            content:
-                "You can upload feedback data in CSV, Excel, or JSON format. The dashboard automatically processes and categorizes text into positive, negative, or neutral sentiment.",
+            content: (
+                <p>
+                    You can input comments directly as <strong>simple text</strong> or
+                    upload them in <strong>Excel</strong> format. The system processes your
+                    file instantly, adds new columns for sentiment, keywords, and insights,
+                    and makes the updated file available for download.
+                </p>
+            ),
         },
         {
             value: "item-3",
             trigger: "What insights does the dashboard provide?",
-            content:
-                "You’ll see sentiment distribution charts, keyword trends, and heatmaps of discussion topics. These insights help you identify emerging concerns and measure public approval.",
+            content: (
+                <p>
+                    The dashboard provides <strong>sentiment results</strong> (positive,
+                    neutral, negative), <strong>top points extracted</strong> from each
+                    comment, and <strong>word clouds</strong> that highlight frequently
+                    used terms. These insights make it easy to spot trends, recurring
+                    issues, and overall feedback tone.
+                </p>
+            ),
         },
         {
             value: "item-4",
             trigger: "Can I filter results by category or group?",
-            content:
-                "Yes. You can filter sentiment results by demographics, topics, or consultation modules to get more precise insights tailored to specific stakeholders.",
+            content: (
+                <p>
+                    Yes. You can filter results by <strong>topics, categories, or
+                        feedback groups</strong>, allowing you to focus on the areas that
+                    matter most for your analysis.
+                </p>
+            ),
         },
         {
             value: "item-5",
             trigger: "Is my data secure?",
-            content:
-                "Absolutely. All feedback is processed securely within your organization’s approved cloud or VPC, ensuring compliance with enterprise security standards.",
+            content: (
+                <p>
+                    Absolutely. All uploaded data is processed securely, and the generated
+                    Excel files are stored and shared only within your <strong>organization’s
+                        environment</strong>, ensuring full compliance with data protection
+                    and privacy standards.
+                </p>
+            ),
         },
         {
             value: "item-6",
             trigger: "How can this help decision-makers?",
-            content:
-                "By surfacing real-time sentiment insights, the dashboard enables faster responses, data-driven decisions, and improved trust in the consultation process.",
+            content: (
+                <p>
+                    The dashboard turns raw comments into <strong>actionable insights</strong>.
+                    Decision-makers can quickly identify positive feedback, address
+                    negative concerns, and track emerging themes, enabling{" "}
+                    <strong>faster, data-driven responses</strong> and improving trust
+                    in the consultation process.
+                </p>
+            ),
         },
-    ],
+    ]
 }: AccordionProps) {
     return (
         <div className="flex w-full flex-col items-center justify-center bg-white px-4 py-16">
@@ -135,8 +175,8 @@ export default function AccordionDemo({
                     Frequently Asked Questions
                 </h2>
                 <p className="mt-2 text-gray-600">
-                    Here are some of the most common questions about our Sentiment
-                    Analysis Dashboard. Click on a question to reveal the answer.
+                    Here are the most common questions about our Sentiment Analysis
+                    Dashboard. Click on a question to reveal the answer.
                 </p>
             </div>
 

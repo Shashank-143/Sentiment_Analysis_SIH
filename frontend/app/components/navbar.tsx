@@ -18,7 +18,21 @@ export function Navbar() {
                     Sentiment<span className="text-cyan-400">AI</span>
                 </Link>
 
-
+                {/* Desktop Menu */}
+                <nav className="hidden md:flex gap-6">
+                    <Link
+                        href="/"
+                        className="text-sm font-medium text-black hover:text-cyan-400 transition-colors"
+                    >
+                        Home
+                    </Link>
+                    <Link
+                        href="/dashboard"
+                        className="text-sm font-medium text-black hover:text-cyan-400 transition-colors"
+                    >
+                        Dashboard
+                    </Link>
+                </nav>
 
                 {/* Mobile Toggle */}
                 <button
@@ -31,8 +45,21 @@ export function Navbar() {
 
             {/* Mobile Menu */}
             {open && (
-                <div className="md:hidden border-t border-neutral-800 bg-black/90 backdrop-blur-md">
-
+                <div className="md:hidden border-t border-neutral-800 bg-white backdrop-blur-md px-4 py-3 flex flex-col gap-3">
+                    <Link
+                        href="/"
+                        className="text-sm font-medium text-black hover:text-cyan-400 transition-colors"
+                        onClick={() => setOpen(false)}
+                    >
+                        Home
+                    </Link>
+                    <Link
+                        href="/dashboard"
+                        className="text-sm font-medium text-black hover:text-cyan-400 transition-colors"
+                        onClick={() => setOpen(false)}
+                    >
+                        Dashboard
+                    </Link>
                 </div>
             )}
         </header>

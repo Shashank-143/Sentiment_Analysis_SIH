@@ -59,12 +59,14 @@ const FeatureGrid: React.FC = () => {
         },
         {
             icon: <Brain size={32} />,
-            title: "E-Consultation Modules",
+            title: "Comprehensive Feedback Review",
             description:
-                "Enable digital consultations that gather, process, and categorize feedback efficiently to support transparent and inclusive decision-making.",
+                "AI-assisted tools ensure every comment on draft legislation is carefully analysed, so no observation is overlooked.",
             glowColor: "#06b6d4",
             accentColor: "#22d3ee",
         },
+
+
         {
             icon: <Sparkles size={32} />,
             title: "Insights from Comments",

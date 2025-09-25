@@ -1,71 +1,71 @@
 import { cn } from "@/lib/utils";
 import {
-    IconAdjustmentsBolt,
-    IconCloud,
-    IconCurrencyDollar,
-    IconEaseInOut,
-    IconHeart,
-    IconHelp,
-    IconRouteAltLeft,
-    IconTerminal2,
+    IconMoodHappy,
+    IconMoodNeutral,
+    IconReportAnalytics,
+    IconChartBubble,
+    IconMessageCircle,
+    IconRobot,
 } from "@tabler/icons-react";
 
 export function FeaturesSectionDemo() {
     const features = [
         {
-            title: "Sentiment Analysis",
+            title: "Sentiment Detection",
             description:
-                "Analyze public feedback with AI-powered sentiment detection, helping decision-makers understand opinions.",
-            icon: <IconTerminal2 />,
+                "Classify feedback as Positive, Negative, or Neutral with AI-powered accuracy.",
+            icon: <IconMoodHappy />,
         },
         {
-            title: "E-Consultation Modules",
+            title: "Word Cloud Generation",
             description:
-                "Enable online consultations with structured AI support, making expert guidance accessible anytime.",
-            icon: <IconEaseInOut />,
+                "Visualize the most frequent keywords in feedback with dynamic word clouds.",
+            icon: <IconChartBubble />,
         },
         {
-            title: "Public Feedback Insights",
+            title: "Feedback Summarization",
             description:
-                "Collect and summarize opinions from multiple sources to improve policy and service outcomes.",
-            icon: <IconCurrencyDollar />,
+                "AI summarizes large amounts of text into clear, concise insights.",
+            icon: <IconReportAnalytics />,
         },
         {
-            title: "Automated Reporting",
+            title: "Supports Excel Uploads",
             description:
-                "Generate comprehensive reports on trends, sentiment, and engagement automatically.",
-            icon: <IconCloud />,
+                "Easily upload Excel files to process large volumes of feedback, enabling fast and accurate sentiment analysis at scale.",
+            icon: <IconMoodNeutral />,
+        },
+
+        {
+            title: "Resilient Multi-Model Design",
+            description:
+                "Core features like sentiment analysis, summarization, and keyword extraction have fallback mechanisms, ensuring uninterrupted operation even if external APIs are unavailable.",
+            icon: <IconRobot />,
         },
         {
-            title: "Data Security",
+            title: "Real-time Analysis",
             description:
-                "All feedback and consultations are securely handled with privacy-first protocols.",
-            icon: <IconRouteAltLeft />,
+                "Get instant results as soon as you upload feedback or reports.",
+            icon: <IconRobot />,
         },
         {
-            title: "24/7 AI Assistance",
+            title: "Engagement Monitoring",
             description:
-                "Our AI agents provide real-time help and guidance around the clock.",
-            icon: <IconHelp />,
+                "Understand how people respond to policies, services, or products at scale.",
+            icon: <IconMessageCircle />,
         },
         {
-            title: "Actionable Recommendations",
+            title: "Completely Responsive",
             description:
-                "Receive AI-driven suggestions to act on feedback and improve consultation outcomes.",
-            icon: <IconAdjustmentsBolt />,
+                "Seamlessly adapts to all screen sizes, ensuring an optimal experience on desktops, tablets, and mobile devices without compromising on design or functionality.",
+            icon: <IconReportAnalytics />,
         },
-        {
-            title: "Comprehensive Coverage",
-            description:
-                "From sentiment detection to reporting, all tools are integrated for seamless decision-making.",
-            icon: <IconHeart />,
-        },
+
     ];
 
     return (
         <div className="max-w-7xl mx-auto py-10">
             <h2 className="text-3xl font-bold text-center mb-10 text-neutral-900 dark:text-neutral-100">
-                How We Can Help You
+                How Our Sentiment AI Helps You
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 relative z-10">
                 {features.map((feature, index) => (
