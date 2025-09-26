@@ -5,10 +5,11 @@ export const isDevelopment = process.env.NODE_ENV === 'development';
 export const DEFAULT_API_URL = isDevelopment
   ? 'http://localhost:8000/api'
   : process.env.NEXT_PUBLIC_ENV === 'staging'
-    ? 'https://sih.shashankgoel.tech'
     : 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
+
+console.log("Using API URL:", API_BASE_URL); // For debugging purposes
 
 export interface SentimentResult {
   comment_id: string;
@@ -37,9 +38,24 @@ function timeoutSignal(ms: number): AbortSignal {
   return controller.signal;
 }
 
+export class ApiError extends Error {
+  status: number;
+  
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+    this.name = 'ApiError';
+  }
+}
+
 // Sentiment Analysis API
 export const analyzeSentiment = async (text: string): Promise<SentimentResult> => {
   try {
+    console.log(`Sending request to: ${API_BASE_URL}/sentiment`);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
     const response = await fetch(`${API_BASE_URL}/sentiment`, {
       method: 'POST',
       headers: {
@@ -53,16 +69,32 @@ export const analyzeSentiment = async (text: string): Promise<SentimentResult> =
           }
         ]
       }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const errorText = await response.text().catch(() => 'No error details available');
+      throw new ApiError(
+        `Server responded with status ${response.status}: ${errorText}`, 
+        response.status
+      );
     }
 
     const data = await response.json();
     return data.results[0];
   } catch (error) {
     console.error('Failed to analyze sentiment:', error);
+    
+    if (error.name === 'AbortError') {
+      throw new ApiError('Request timed out. The server took too long to respond.', 408);
+    }
+    
+    if (!navigator.onLine) {
+      throw new ApiError('You are offline. Please check your internet connection.', 0);
+    }
+    
     throw error;
   }
 };

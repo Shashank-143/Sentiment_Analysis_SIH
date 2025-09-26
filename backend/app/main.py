@@ -15,7 +15,7 @@ origins = [
     "http://127.0.0.1:3000",
     "https://sentiment-analysis-sih.vercel.app",
     "https://sentiment-analysis-sih-frontend.vercel.app",  # Additional production domain
-    "https://sih.shashankgoel.tech"
+    "https://sih.shashankgoel.tech",
     "https://www.sentiment-analysis-sih.vercel.app",
 ]
 

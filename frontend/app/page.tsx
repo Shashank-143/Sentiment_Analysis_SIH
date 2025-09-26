@@ -6,7 +6,6 @@ import { ThreeDMarqueeDemoSecond } from "./components/3-dmarquee/3-d-marquee-mai
 import AccordionDemo from "./components/accordion";
 import Footer from "./components/footer";
 
-
 export default function Home() {
   return (
     <>
