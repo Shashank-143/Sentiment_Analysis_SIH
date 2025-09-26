@@ -2,9 +2,11 @@
 
 // API base URL - configurable via environment variables
 export const isDevelopment = process.env.NODE_ENV === 'development';
-export const DEFAULT_API_URL = isDevelopment 
+export const DEFAULT_API_URL = isDevelopment
   ? 'http://localhost:8000/api'
-  : 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
+  : process.env.NEXT_PUBLIC_ENV === 'staging'
+    ? 'https://sih.shashankgoel.tech'
+    : 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
@@ -27,6 +29,12 @@ export interface ExcelProcessingResult {
   success: boolean;
   downloadUrl?: string;
   message?: string;
+}
+
+function timeoutSignal(ms: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
 }
 
 // Sentiment Analysis API
@@ -132,7 +140,7 @@ export const processExcelFile = async (file: File): Promise<Blob> => {
         method: 'GET', 
         mode: 'cors',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(10000) // 10 second timeout for connectivity check
+        signal: timeoutSignal(10000) // ✅ 10 second timeout
       });
       
       if (!statusResponse.ok) {
@@ -140,7 +148,7 @@ export const processExcelFile = async (file: File): Promise<Blob> => {
       }
       
       console.log('Connectivity test successful');
-    } catch (connError) {
+    } catch (connError: any) {
       console.error('Backend server connectivity test failed:', connError);
       throw new Error(`Cannot connect to server (${connError.message}). Please check your internet connection and ensure the backend server is running.`);
     }
@@ -152,7 +160,7 @@ export const processExcelFile = async (file: File): Promise<Blob> => {
       redirect: 'follow',
       mode: 'cors',
       credentials: 'include', 
-      signal: AbortSignal.timeout(600000) // 10 min timeout for larger files
+      signal: timeoutSignal(600000) // ✅ 10 min timeout
     });
 
     if (!response.ok) {
@@ -173,10 +181,10 @@ export const processExcelFile = async (file: File): Promise<Blob> => {
     }
     
     return blob;
-  } catch (error) {
+  } catch (error: any) {
     // Better handle network errors
     if (error.name === 'AbortError') {
-      console.error('Request timed out after 10 minutes');
+      console.error('Request timed out');
       throw new Error('Request timed out. Excel processing is taking too long. Please try with a smaller file or try again later.');
     } else if (error.message === 'Failed to fetch') {
       console.error('Network error - Failed to fetch');

@@ -753,3 +753,11 @@ export default function FileUpload({
                                         Dismiss and Try Again
                                     </button>
                                 </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
