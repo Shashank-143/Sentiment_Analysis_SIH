@@ -1,9 +1,11 @@
 // API services for communicating with the backend
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
 // API base URL - configurable via environment variables
 export const DEFAULT_API_URL = isDevelopment
-  ? 'http://localhost:8000/api'
-  : 'https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api';
+  ? "http://localhost:8000/api"
+  : "https://sentiment-analysis-sih-backend-16fbf47c4821.herokuapp.com/api";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 
