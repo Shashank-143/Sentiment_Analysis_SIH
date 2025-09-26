@@ -460,7 +460,7 @@ export default function FileUpload({
                         errorMessage = 'Cannot connect to server. Please check your internet connection and ensure the backend server is running.';
                         errorCode = 'CONNECTION_ERROR';
                     } else if (error.message.includes('Error 400')) {
-                        errorMessage = 'Invalid Excel format. File must contain "comment_id" and "comment" columns.';
+                        errorMessage = 'Invalid Excel format. File must contain &quot;comment_id&quot; and &quot;comment&quot; columns.';
                         errorCode = 'INVALID_FORMAT';
                     } else if (error.message.includes('Error 413')) {
                         errorMessage = 'File too large. Please try with a smaller file.';
@@ -742,7 +742,7 @@ export default function FileUpload({
                                     )}
                                     {error.code === 'INVALID_FORMAT' && (
                                         <p className="text-xs text-red-500/70 dark:text-red-400/70 mt-1 ml-6">
-                                            Your Excel file must have columns named exactly "comment_id" and "comment" (case-insensitive). 
+                                            Your Excel file must have columns named exactly &quot;comment_id&quot; and &quot;comment&quot; (case-insensitive). 
                                             Please check your file and ensure these columns are present.
                                         </p>
                                     )}
@@ -753,13 +753,3 @@ export default function FileUpload({
                                         Dismiss and Try Again
                                     </button>
                                 </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-FileUpload.displayName = "FileUpload";
