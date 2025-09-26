@@ -8,7 +8,7 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UploadCloud } from "lucide-react";
-import { isDevelopment, DEFAULT_API_URL, API_BASE_URL } from "@/services/api";
+import { API_BASE_URL } from "@/services/api";
 import { cn } from "@/lib/utils";
 
 type FileStatus = "idle" | "dragging" | "uploading" | "error";
@@ -635,11 +635,8 @@ export default function FileUpload({
                                                 Upload Excel file for analysis
                                             </h3>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Excel files (.xlsx, .xls) with columns "comment_id" and "comment"{" "}
-                                                {maxFileSize &&
-                                                    `up to ${formatBytes(
-                                                        maxFileSize
-                                                    )}`}
+                                                Excel files (.xlsx, .xls) with columns &quot;comment_id&quot; and &quot;comment&quot;{" "}
+                                                {maxFileSize && `up to ${formatBytes(maxFileSize)}`}
                                             </p>
                                         </div>
 
